@@ -43,6 +43,7 @@
 #include <locale>
 
 #include "base64/base64.h"
+#include "m_util.h"
 
 using namespace std; 
 
@@ -74,7 +75,8 @@ string current_timestamp() {
 }
 
 void extract_images(const string& content) {
-	cout << current_timestamp() << "Extracting images from XML." << endl;
+	LOG_DBG("Extracting images from XML\n");
+	//cout << current_timestamp() << "Extracting images from XML." << endl;
 	// Format: https://www.smpte.org/sites/default/files/st2052-1-2010.pdf
 
 	// make a safe-to-modify copy of input_xml
@@ -148,8 +150,11 @@ int main(int argc, char* argv[]) {
 	string app_name(argv[0]);
 	int ret_code = 0;
 
+	//LOG_DBG("hello world");
 	if (argc != 2) {
-		cout << current_timestamp() << "File not correctly inserted" << ((argc == 1) ? " (lacking)." : ".") << endl;
+		//cout << current_timestamp() << "File not correctly inserted" << ((argc == 1) ? " (lacking)." : ".") << endl;
+		string str = current_timestamp();
+		LOG_ERR("cur_timestamp=%s File not correctly inserted\n", str.c_str());
 		usage(app_name);
 		return -1;
 	}
@@ -158,10 +163,12 @@ int main(int argc, char* argv[]) {
 	ifstream file(filename, ios::binary | ios::ate);	// open file at the end of it (to determine file size)
 
 	if( file  &&  file.is_open() ){ 
-		cout << current_timestamp() << "Successfully loaded file " << filename << endl;
+		//cout << current_timestamp() << "Successfully loaded file " << filename << endl;
+		LOG_ERR("filename=%s Successfully loaded file\n", filename.c_str());
 	}
 	else{
-		cout << current_timestamp() << "File " << filename << " not possible to be open." << endl;
+		//cout << current_timestamp() << "File " << filename << " not possible to be open." << endl;
+		LOG_ERR("filename=%s Snot possible to be open\n", filename.c_str());
 		usage(app_name);
 		return -2;
 	}
@@ -188,19 +195,22 @@ int main(int argc, char* argv[]) {
 
 		if( file.eof()  ||										// terminate if we are at the end of the file 
 			box_address >= file_size - (2 * BLOCKS_SIZE + 1) ){	// or it lacks less than a min box size for the end of the file
-			cout << current_timestamp() << "All file was read." << endl;
+			//cout << current_timestamp() << "All file was read." << endl;
+			LOG_DBG("All file was read\n");
 			work_to_do = false;
 			break;
 		}
 		
 		if (file.fail()) {
-			cout << current_timestamp() << u8R"("fail" error occurred.)" << endl;
+			//cout << current_timestamp() << u8R"("fail" error occurred.)" << endl;
+			LOG_ERR("error occurred.\n");
 			work_to_do = false;
 			ret_code = -1;
 			break;
 		}
 		if (file.bad()) {
-			cout << current_timestamp() << u8R"("bad" error occurred.)" << endl;
+			//cout << current_timestamp() << u8R"("bad" error occurred.)" << endl;
+			LOG_ERR("fail error occurred");
 			work_to_do = false;
 			ret_code = -2;
 			break;
@@ -214,25 +224,29 @@ int main(int argc, char* argv[]) {
 		string box_type_s(memory_block, BLOCKS_SIZE);
 
 		//box new_box(box_address, box_size, box_type);
-		cout << current_timestamp() << "Found box of type " << box_type_s << " and size " << box_size << endl;
-
+		//cout << current_timestamp() << "Found box of type " << box_type_s << " and size " << box_size << endl;
+		LOG_DBG("Found box of type=%s size=%d byte\n", box_type_s.c_str(), box_size);
+		usleep(1000 * 1000);
 		switch (box_type) {
 			case BLOCK2INT("moof"):	// these only contain sub-boxes,
 			case BLOCK2INT("traf"):	// just go to the next sub-box
 				break;
 			case BLOCK2INT("mdat"): {
-				cout << current_timestamp() << "Content of mdat box is: " << endl;
+				//cout << current_timestamp() << "Content of mdat box is: " << endl;
+				LOG_DBG("Content of mdat box is: ---------------------------------------\n");
 				uint32_t l = box_size - 2 * BLOCKS_SIZE;
 				uint32_t chunk_size = ((l > CHUNK_SIZE) ? CHUNK_SIZE : l);
 				for (; l > 0; l -= chunk_size) {
 					chunk_size = ((l > CHUNK_SIZE) ? CHUNK_SIZE : l);
 					file.read(chunk_of_content.get(), chunk_size);
 					string content_chunk(chunk_of_content.get(), chunk_size);
-					cout << content_chunk;
+					//cout << content_chunk;
+					LOG_DBG("content_chunk:%s ", content_chunk.c_str());
 					extract_images(content_chunk);	// TODO: glue up images if divided by several chunks; implement XML chunks reading (eg. extract valid sub XMLs to be parsed)
 					// TODO: check intermediate reading file errors
 				}
-				cout << endl;
+				//LOG_DBG("Content of mdat box is --------------------------------------------\n");
+				//cout << endl;
 				break; }
 			default:				// all other box types don't contain sub-boxes
 				file.seekg( box_size - 2 * BLOCKS_SIZE,  ios::cur ); // skip their content
