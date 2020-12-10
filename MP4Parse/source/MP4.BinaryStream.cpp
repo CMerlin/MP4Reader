@@ -222,7 +222,8 @@ uint64_t BinaryStream::readBigEndianUnsignedLong( void )
 {
     uint8_t  c[ 8 ];
     uint64_t n;
-    
+
+
     this->read( ( char * )c, 8 );
     
     n = ( uint64_t )c[ 0 ] << 56
@@ -235,6 +236,22 @@ uint64_t BinaryStream::readBigEndianUnsignedLong( void )
       | ( uint64_t )c[ 7 ];
     
     return n;
+}
+
+uint64_t BinaryStream::readBigEndian64( void )
+{
+	int i = 0;
+	uint8_t  c[ 8 ];
+	uint64_t n;
+	U_UINT64_T u64_val;
+
+	this->read( ( char * )c, 8 );
+	for(i = 0; i< 8 ; i++){
+		u64_val.buf[7-i] = c[i];
+	}
+	n = u64_val.val;
+
+	return n;
 }
 
 uint64_t BinaryStream::readLittleEndianUnsignedLong( void )

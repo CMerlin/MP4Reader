@@ -41,13 +41,17 @@ MDAT::MDAT( void )
 std::string MDAT::description( void )
 {
     std::ostringstream o;
-    
     o << "MP4 Atom:           " << this->_type << "\n";
-    
+	//LOG_DBG("MP4 Atom:           %s\n", (this->_type));
     return o.str();
 }
 
 void MDAT::processData( MP4::BinaryStream * stream, size_t length )
 {
-    stream->ignore( length );
+	long long extern_length = 0;
+	if(0 > length){
+		extern_length = stream->readBigEndian64();
+	}
+	LOG_DBG("length=%d ll_val=%lld\n", (int)length, extern_length);
+	stream->ignore( length );
 }

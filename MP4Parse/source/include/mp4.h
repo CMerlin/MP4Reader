@@ -37,4 +37,9 @@
 #include "stl.h"
 #include "types.h"
 
+typedef union {
+	long long unsigned int val;
+	unsigned char buf[8];
+}U_UINT64_T;
+
 #endif /* _MP4_H_ */

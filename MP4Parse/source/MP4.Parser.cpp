@@ -28,6 +28,9 @@
  ******************************************************************************/
  
 /* $Id$ */
+#include <iostream>
+#include <string>
+using namespace std;
 
 #include "MP4.Parser.h"
 #include "atoms.h"
@@ -88,18 +91,19 @@ Parser::Parser( char * filename )
     {
         length     = this->_stream->readBigEndianUnsignedInteger();
         dataLength = 0;
-        
+		
         this->_stream->read( ( char * )type, 4 );
-        
+		LOG_DBG("atoms type=%s length=%d\n", type, length);
         if( length == 1 )
         {
-            dataLength = this->_stream->readBigEndianUnsignedInteger() - 16;
+            //dataLength = this->_stream->readBigEndianUnsignedInteger() - 16;
+			dataLength = this->_stream->readBigEndian64() - 16;
         }
         else
         {
             dataLength = length - 8;
         }
-        
+       
         /* Container atoms */
         if
         (
@@ -335,8 +339,10 @@ Parser::Parser( char * filename )
         
         ( ( MP4::DataAtom * )atom )->processData( this->_stream, dataLength );
     }
-    
-    std::cout << this->_file->description();
+
+	string str = this->_file->description();
+	LOG_DBG("type=%s\n", str.c_str());
+    //std::cout << this->_file->description();
 }
 
 Parser::~Parser( void )

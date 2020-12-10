@@ -74,7 +74,9 @@ namespace MP4
             BinaryStream( void );
             BinaryStream( char * filename );
             ~BinaryStream( void );
-            
+
+			uint64_t readBigEndian64( void );
+
             uint8_t readUnsignedChar( void );
             int8_t readSignedChar( void );
                         
